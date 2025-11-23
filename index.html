@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaushal Kahapola | Research & Engineering</title>
+    
+    <script>
+        // Interactive diagram functionality
+        function highlightConnections(elementId) {
+            document.querySelectorAll('.highlighted, .connection-highlighted').forEach(el => {
+                el.classList.remove('highlighted', 'connection-highlighted');
+            });
+            
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.classList.add('highlighted');
+                const connections = element.getAttribute('data-connections');
+                if (connections) {
+                    connections.split(',').forEach(connId => {
+                        const conn = document.getElementById(connId);
+                        if (conn) conn.classList.add('connection-highlighted');
+                    });
+                }
+            }
+        }
+        
+        function clearHighlights() {
+            document.querySelectorAll('.highlighted, .connection-highlighted').forEach(el => {
+                el.classList.remove('highlighted', 'connection-highlighted');
+            });
+        }
+    </script>
+
+    <style>
+        /* --- Core Variables --- */
+        :root {
+            --primary-color: #004085;
+            --accent-color: #0056b3;
+            --text-main: #333;
+            --text-light: #555;
+            --bg-body: #f8f9fa;
+            --bg-card: #ffffff;
+            --border-color: #e1e4e8;
+            --code-bg: #f6f8fa;
+        }
+
+        /* --- Reset & Base --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 40px auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        /* --- Header --- */
+        header { padding: 40px; border-bottom: 1px solid var(--border-color); background: #fff; }
+        h1 { font-size: 2.5rem; color: #111; letter-spacing: -0.5px; margin-bottom: 10px; }
+        .role { font-size: 1.2rem; color: var(--text-light); font-weight: 400; margin-bottom: 20px; }
+        .contact-bar { display: flex; gap: 20px; font-size: 0.95rem; }
+        .contact-bar a { color: var(--primary-color); text-decoration: none; font-weight: 600; }
+        .contact-bar a:hover { text-decoration: underline; }
+
+        /* --- Navigation --- */
+        .tabs { display: flex; border-bottom: 1px solid var(--border-color); background: #fafbfc; }
+        .tab-btn { padding: 15px 25px; background: none; border: none; border-right: 1px solid var(--border-color); cursor: pointer; font-size: 1rem; color: var(--text-light); font-weight: 500; transition: all 0.2s; }
+        .tab-btn:hover { background: #f0f0f0; color: #000; }
+        .tab-btn.active { background: #fff; color: var(--primary-color); border-top: 3px solid var(--primary-color); font-weight: 700; margin-top: -1px; }
+
+        /* --- Content --- */
+        .content-area { padding: 40px; min-height: 500px; }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        h2 { font-size: 1.8rem; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 10px; color: #222; }
+        h3 { font-size: 1.3rem; margin: 30px 0 15px 0; color: #333; font-weight: 600; }
+        h4 { font-size: 1.1rem; margin: 20px 0 10px 0; color: #444; font-weight: 600; }
+        p { margin-bottom: 15px; }
+        ul { margin-bottom: 20px; padding-left: 20px; }
+        li { margin-bottom: 8px; }
+
+        /* --- Research Specific --- */
+        .research-hero { background: #f8fbff; border-left: 4px solid var(--primary-color); padding: 20px; margin-bottom: 30px; }
+        .status-badge { display: inline-block; background: #e1f5fe; color: #0277bd; padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; margin-bottom: 15px; border: 1px solid #b3e5fc; }
+
+        /* --- Diagram Styles --- */
+        .diagram-container { width: 100%; margin: 25px 0; padding: 20px; background-color: #ffffff; border: 1px solid #eee; border-radius: 6px; display: flex; justify-content: center; overflow-x: auto; }
+        .interactive-diagram { max-width: 100%; height: auto; overflow: visible; }
+        .interactive-diagram path, .interactive-diagram polygon { vector-effect: non-scaling-stroke; }
+        
+        .diagram-node { cursor: pointer; transition: all 0.2s ease; }
+        .diagram-node:hover { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15)); }
+        .diagram-node.highlighted { filter: drop-shadow(0 3px 6px rgba(0,123,255,0.3)); }
+        
+        .diagram-arrow { transition: stroke-width 0.2s ease; fill: none; }
+        .diagram-arrow.connection-highlighted { stroke-width: 3; stroke: #007bff !important; }
+        
+        .node-input { fill: #e3f2fd; stroke: #1565c0; stroke-width: 2; }
+        .node-process { fill: #fff9c4; stroke: #fbc02d; stroke-width: 2; }
+        .node-agent { fill: #e8f5e9; stroke: #2e7d32; stroke-width: 2; }
+        .node-orchestrator { fill: #f3e5f5; stroke: #7b1fa2; stroke-width: 2; }
+        .node-done { fill: #c8e6c9; stroke: #2e7d32; stroke-width: 2; }
+        .node-active { fill: #bbdefb; stroke: #1565c0; stroke-width: 2; }
+        .node-future { fill: #f5f5f5; stroke: #bdbdbd; stroke-width: 2; stroke-dasharray: 5,5; }
+        .node-microservice { fill: #fff3e0; stroke: #f57c00; stroke-width: 2; }
+        .node-kafka { fill: #e1f5fe; stroke: #0277bd; stroke-width: 3; }
+        
+        .node-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 11px; text-anchor: middle; dominant-baseline: middle; fill: #333; pointer-events: none; }
+        .node-title { font-weight: 600; font-size: 12px; fill: #222; }
+        .node-subtitle { font-size: 10px; fill: #666; }
+        .emoji-text { font-size: 18px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+        .diagram-caption { text-align: center; font-size: 0.85rem; color: #777; margin-top: -10px; margin-bottom: 30px; font-style: italic; }
+
+        /* --- Components --- */
+        .tech-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .tech-tag { background: var(--code-bg); border: 1px solid #ddd; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; font-family: monospace; color: #444; }
+        .project-card { margin-bottom: 40px; padding-bottom: 30px; border-bottom: 1px solid #eee; }
+        .project-card:last-child { border-bottom: none; }
+        .project-header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; }
+        .about-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 40px; }
+
+        @media (max-width: 768px) {
+            .contact-bar { flex-direction: column; gap: 10px; }
+            .tabs { flex-wrap: wrap; }
+            .tab-btn { flex: 1 1 50%; border-bottom: 1px solid #ddd; }
+            .about-grid { grid-template-columns: 1fr; }
+            .diagram-container { padding: 10px; overflow-x: auto; }
+            .interactive-diagram { min-width: 600px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Kaushal Kahapola</h1>
+            <div class="role">Software Engineer & Researcher | Distributed Systems Specialist</div>
+            <div class="contact-bar">
+                <a href="mailto:kaushal.21@cse.mrt.ac.lk">kaushal.21@cse.mrt.ac.lk</a>
+                <a href="https://github.com/kaushalkahapola">GitHub</a>
+                <a href="https://linkedin.com/in/kaushalkahapola">LinkedIn</a>
+                <a href="Kaushal_Kahapola_CV.pdf">Download CV (PDF)</a>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" onclick="openTab(event, 'home')">Overview</button>
+            <button class="tab-btn" onclick="openTab(event, 'research')">Research (FYP)</button>
+            <button class="tab-btn" onclick="openTab(event, 'engineering')">Engineering Projects</button>
+            <button class="tab-btn" onclick="openTab(event, 'experience')">Experience</button>
+        </nav>
+
+        <div class="content-area">
+            
+            <div id="home" class="tab-content active">
+                <div class="about-grid">
+                    <div>
+                        <h2>About Me</h2>
+                        <p>
+                            I am a final-year undergraduate at the <strong>University of Moratuwa</strong> (CSE), specializing in Data Science & Engineering. 
+                            My technical focus lies at the intersection of <strong>Distributed Systems</strong> and <strong>Automated Software Engineering</strong>.
+                        </p>
+                        <br>
+                        <p>
+                            I have production experience architecting microservices at <strong>WSO2</strong> and conducting Tier-1 academic research on software maintenance (MSR). 
+                            My goal is to bridge the gap between academic research in AI/LLMs and practical, scalable enterprise software engineering.
+                        </p>
+                    </div>
+                    <div>
+                        <h3>Core Stack</h3>
+                        <div class="tech-list">
+                            <span class="tech-tag">Java (Advanced)</span>
+                            <span class="tech-tag">Python</span>
+                            <span class="tech-tag">Ballerina</span>
+                            <span class="tech-tag">C++</span>
+                            <span class="tech-tag">Microservices</span>
+                            <span class="tech-tag">Kafka</span>
+                            <span class="tech-tag">Docker</span>
+                            <span class="tech-tag">PostgreSQL</span>
+                            <span class="tech-tag">LLM Agents</span>
+                            <span class="tech-tag">RAG</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="research" class="tab-content">
+                <span class="status-badge">Current Status: Paper Submitted to MSR 2026 (Under Review)</span>
+                
+                <h2>Automated Patch Backporting Framework for Enterprise Java</h2>
+                
+                <div class="research-hero">
+                    <h3>The Problem: Manual Maintenance at Scale</h3>
+                    <p>
+                        Enterprise software relies heavily on Long-Term Support (LTS) versions. [cite_start]However, empirical studies show that over <strong>80% of security patches</strong> fail to propagate to all vulnerable branches, leaving systems exposed to known exploits [cite: 251-252].
+                    </p>
+                    <p>
+                        Manual backporting is not only slow (averaging 40+ days) but technically demanding due to <strong>Semantic and Structural Divergence</strong>—where newer patches rely on APIs that simply do not exist in older codebases.
+                    </p>
+                </div>
+
+                <h3>1. System Architecture & Agentic Workflow</h3>
+                <p>
+                    We implemented a novel <strong>Multi-Agent Large Language Model (LLM) framework</strong> that mimics a human engineering team. Unlike standard code generators, this system decomposes the backporting task into specialized roles to ensure semantic correctness.
+                </p>
+
+                <div class="diagram-container">
+                    <svg class="interactive-diagram" viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <filter id="dropshadow" x="0" y="0" width="120%" height="120%">
+                                <feDropShadow dx="1" dy="1" stdDeviation="2" flood-color="rgba(0,0,0,0.2)"/>
+                            </filter>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+                            </marker>
+                            <marker id="blue-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#2e7d32"/>
+                            </marker>
+                        </defs>
+                        
+                        <text x="120" y="20" class="node-text" style="font-weight:bold; font-size:14px; fill:#1565c0;">Phase 1: Hybrid Detection</text>
+                        <text x="580" y="20" class="node-text" style="font-weight:bold; font-size:14px; fill:#2e7d32;">Phase 2: Multi-Agent Core</text>
+                        
+                        <g id="mainline-patch" class="diagram-node" data-connections="git-analysis"
+                           onmouseover="highlightConnections('mainline-patch')" onmouseout="clearHighlights()">
+                            <rect x="40" y="60" width="120" height="60" rx="6" class="node-input"/>
+                            <text x="100" y="85" class="node-text node-title">Mainline Patch</text>
+                            <text x="100" y="100" class="node-text node-subtitle">Source commit</text>
+                        </g>
+                        
+                        <g id="target-repo" class="diagram-node" data-connections="git-analysis"
+                           onmouseover="highlightConnections('target-repo')" onmouseout="clearHighlights()">
+                            <rect x="40" y="140" width="120" height="60" rx="6" class="node-input"/>
+                            <text x="100" y="165" class="node-text node-title">Target Repo</text>
+                            <text x="100" y="180" class="node-text node-subtitle">LTS branch</text>
+                        </g>
+                        
+                        <g id="git-analysis" class="diagram-node" data-connections="embedding-analysis,orchestrator"
+                           onmouseover="highlightConnections('git-analysis')" onmouseout="clearHighlights()">
+                            <rect x="220" y="80" width="140" height="50" rx="6" class="node-process"/>
+                            <text x="290" y="100" class="node-text node-title">Git History Analysis</text>
+                            <text x="290" y="115" class="node-text node-subtitle">Heuristic location</text>
+                        </g>
+                        
+                        <g id="embedding-analysis" class="diagram-node" data-connections="orchestrator"
+                           onmouseover="highlightConnections('embedding-analysis')" onmouseout="clearHighlights()">
+                            <rect x="220" y="160" width="140" height="50" rx="6" class="node-process"/>
+                            <text x="290" y="180" class="node-text node-title">TF-IDF & Embeddings</text>
+                            <text x="290" y="195" class="node-text node-subtitle">Fallback method</text>
+                        </g>
+                        
+                        <g id="orchestrator" class="diagram-node" data-connections="reasoning-agent,generation-agent,validation-agent"
+                           onmouseover="highlightConnections('orchestrator')" onmouseout="clearHighlights()">
+                            <ellipse cx="500" cy="180" rx="60" ry="35" class="node-orchestrator"/>
+                            <text x="500" y="175" class="node-text node-title">Orchestrator</text>
+                            <text x="500" y="188" class="node-text node-subtitle">Agent Manager</text>
+                        </g>
+                        
+                        <g id="reasoning-agent" class="diagram-node" data-connections="generation-agent"
+                           onmouseover="highlightConnections('reasoning-agent')" onmouseout="clearHighlights()">
+                            <rect x="400" y="280" width="120" height="60" rx="6" class="node-agent"/>
+                            <text x="460" y="300" class="node-text node-title">Reasoning Agent</text>
+                            <text x="460" y="315" class="node-text node-subtitle">Root Cause Analysis</text>
+                            <text x="460" y="328" class="node-text node-subtitle">PDG/CDG Planning</text>
+                        </g>
+                        
+                        <g id="generation-agent" class="diagram-node" data-connections="validation-agent"
+                           onmouseover="highlightConnections('generation-agent')" onmouseout="clearHighlights()">
+                            <rect x="580" y="280" width="120" height="60" rx="6" class="node-agent"/>
+                            <text x="640" y="300" class="node-text node-title">Generation Agent</text>
+                            <text x="640" y="315" class="node-text node-subtitle">Code Synthesis</text>
+                            <text x="640" y="328" class="node-text node-subtitle">Plan-guided</text>
+                        </g>
+                        
+                        <g id="validation-agent" class="diagram-node"
+                           onmouseover="highlightConnections('validation-agent')" onmouseout="clearHighlights()">
+                            <rect x="580" y="80" width="120" height="60" rx="6" class="node-agent"/>
+                            <text x="640" y="100" class="node-text node-title">Validation Agent</text>
+                            <text x="640" y="115" class="node-text node-subtitle">Quality Gates</text>
+                            <text x="640" y="128" class="node-text node-subtitle">Syntax + Tests</text>
+                        </g>
+                        
+                        <path d="M 160 90 L 220 95" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)" class="diagram-arrow"/>
+                        <path d="M 160 170 L 220 175" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)" class="diagram-arrow"/>
+                        <path d="M 290 130 L 290 160" stroke="#fbc02d" stroke-width="2" marker-end="url(#arrowhead)" class="diagram-arrow"/>
+                        <text x="300" y="150" class="node-text" style="font-size:9px; fill:#f57c00;">fallback</text>
+                        
+                        <path d="M 360 105 Q 400 120 440 160" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)" class="diagram-arrow"/>
+                        <path d="M 360 185 Q 400 180 440 180" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)" class="diagram-arrow"/>
+                        
+                        <path d="M 480 215 L 460 280" stroke="#7b1fa2" stroke-width="2" marker-end="url(#blue-arrow)" class="diagram-arrow"/>
+                        <path d="M 520 215 L 620 280" stroke="#7b1fa2" stroke-width="2" marker-end="url(#blue-arrow)" class="diagram-arrow"/>
+                        <path d="M 540 155 L 580 125" stroke="#7b1fa2" stroke-width="2" marker-end="url(#blue-arrow)" class="diagram-arrow"/>
+                        
+                        <path d="M 520 310 L 580 310" stroke="#2e7d32" stroke-width="2" marker-end="url(#blue-arrow)" class="diagram-arrow"/>
+                        <path d="M 640 280 L 640 140" stroke="#2e7d32" stroke-width="2" marker-end="url(#blue-arrow)" class="diagram-arrow"/>
+                        
+                        <path d="M 460 280 Q 450 240 470 215" stroke="#7b1fa2" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#blue-arrow)" class="diagram-arrow"/>
+                        <path d="M 620 280 Q 550 240 520 215" stroke="#7b1fa2" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#blue-arrow)" class="diagram-arrow"/>
+                        <path d="M 580 110 Q 550 140 530 155" stroke="#7b1fa2" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#blue-arrow)" class="diagram-arrow"/>
+                    </svg>
+                </div>
+                <div class="diagram-caption">Figure 1: High-Level System Architecture showing Hybrid Detection and Agent Interaction.</div>
+
+                <h4>Key Components</h4>
+                <ul>
+                    [cite_start]<li><strong>Reasoning Agent:</strong> Uses <em>Control/Program Dependency Graphs (CDG/PDG)</em> to trace change propagation and plan the adaptation, separating core logic from side effects [cite: 655-658].</li>
+                    [cite_start]<li><strong>Generation Agent:</strong> Implements the plan using a mix of template-based substitution and LLM synthesis for complex logic [cite: 682-685].</li>
+                    [cite_start]<li><strong>Validation Agent:</strong> A 3-layer quality gate: (1) Rapid compilation, (2) Static analysis, (3) Regression testing [cite: 690-692].</li>
+                    [cite_start]<li><strong>Orchestrator:</strong> Manages the iterative feedback loop between agents if validation fails [cite: 698-701].</li>
+                </ul>
+
+                <h3>2. Methodology & Progress</h3>
+                
+                <div class="diagram-container">
+                    <svg class="interactive-diagram" viewBox="0 0 800 180" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="100" y1="90" x2="700" y2="90" stroke="#ddd" stroke-width="4"/>
+                        <line x1="100" y1="90" x2="500" y2="90" stroke="#2e7d32" stroke-width="6"/>
+                        
+                        <g id="step1" class="diagram-node" onmouseover="highlightConnections('step1')" onmouseout="clearHighlights()">
+                            <circle cx="200" cy="90" r="18" class="node-done"/>
+                            <text x="200" y="93" class="emoji-text">✓</text>
+                            <rect x="150" y="110" width="100" height="45" rx="4" class="node-done" opacity="0.9"/>
+                            <text x="200" y="127" class="node-text node-title">Dataset Curation</text>
+                            <text x="200" y="140" class="node-text node-subtitle">474 instances</text>
+                            <text x="200" y="40" class="node-text" style="font-size:10px; fill:#2e7d32; font-weight:600;">COMPLETED</text>
+                        </g>
+                        
+                        <g id="step2" class="diagram-node" onmouseover="highlightConnections('step2')" onmouseout="clearHighlights()">
+                            <circle cx="350" cy="90" r="18" class="node-done"/>
+                            <text x="350" y="93" class="emoji-text">✓</text>
+                            <rect x="300" y="110" width="100" height="45" rx="4" class="node-done" opacity="0.9"/>
+                            <text x="350" y="127" class="node-text node-title">Hybrid Detection</text>
+                            <text x="350" y="140" class="node-text node-subtitle">Git + Embeddings</text>
+                            <text x="350" y="40" class="node-text" style="font-size:10px; fill:#2e7d32; font-weight:600;">COMPLETED</text>
+                        </g>
+                        
+                        <g id="step3" class="diagram-node" onmouseover="highlightConnections('step3')" onmouseout="clearHighlights()">
+                            <circle cx="500" cy="90" r="18" class="node-active"/>
+                            <text x="500" y="93" class="emoji-text">⚡</text>
+                            <rect x="450" y="110" width="100" height="45" rx="4" class="node-active" opacity="0.9"/>
+                            <text x="500" y="127" class="node-text node-title">Agent System</text>
+                            <text x="500" y="140" class="node-text node-subtitle">Orchestration</text>
+                            <text x="500" y="40" class="node-text" style="font-size:10px; fill:#1565c0; font-weight:600;">IN PROGRESS</text>
+                        </g>
+                        
+                        <g id="step4" class="diagram-node" onmouseover="highlightConnections('step4')" onmouseout="clearHighlights()">
+                            <circle cx="650" cy="90" r="18" class="node-future"/>
+                            <text x="650" y="93" class="emoji-text">○</text>
+                            <rect x="600" y="110" width="100" height="45" rx="4" class="node-future" opacity="0.9"/>
+                            <text x="650" y="127" class="node-text node-title">Evaluation</text>
+                            <text x="650" y="140" class="node-text node-subtitle">Benchmarks</text>
+                            <text x="650" y="40" class="node-text" style="font-size:10px; fill:#999; font-weight:600;">PLANNED</text>
+                        </g>
+                        
+                        <text x="400" y="25" class="node-text" style="font-weight:bold; font-size:15px; fill:#333;">Research Progress Timeline</text>
+                        <text x="300" y="170" class="node-text" style="font-size:13px; fill:#2e7d32; font-weight:600;">65% Complete</text>
+                    </svg>
+                </div>
+                <div class="diagram-caption">Figure 2: Current Research Progress (Green: Completed, Blue: In Progress).</div>
+
+                <h4>Step 1: Dataset Curation (JavaBackports)</h4>
+                <p>
+                    [cite_start]We constructed a benchmark dataset derived from <strong>474 verified backport instances</strong> across major open-source projects (OpenJDK, Elasticsearch, Hadoop, Kafka). This involved mining over 11,000 commits to categorize patches by complexity (Syntactic vs. Semantic divergence) [cite: 279-281, 621-623].
+                </p>
+
+                <h4>Step 2: Hybrid Code Location Engine</h4>
+                <p>
+                    Developed a <strong>Repository-Agnostic</strong> location engine that combines <strong>Git history tracing</strong> with <strong>TF-IDF and Code Embeddings</strong> (Vector Search). [cite_start]This multi-stage approach ensures accurate identification of patch locations even across divergent branches or file refactors, avoiding the high computational cost of full-repository scanning [cite: 283-285, 708-729].
+                </p>
+
+                <h4>Step 3: Multi-Agent Implementation</h4>
+                <p>
+                    We are currently in the <strong>initial implementation phase</strong> of the core Multi-Agent System. [cite_start]Work is focused on developing the agent orchestration layer and the fundamental reasoning logic required to analyze patch dependencies before moving toward full automation [cite: 651-654].
+                </p>
+            </div>
+
+            <div id="engineering" class="tab-content">
+                <h2>Engineering Projects</h2>
+
+                <div class="project-card">
+                    <div class="project-header">
+                        <h3>Smart Campus Resource Management</h3>
+                        <span class="tech-tag">Microservices / Kafka / Ballerina</span>
+                    </div>
+                    <p>
+                        A distributed platform designed to optimize university resource allocation. Unlike standard CRUD applications, this system utilizes an event-driven architecture to handle high-concurrency booking requests and AI-based conflict resolution.
+                    </p>
+                    
+                    <div class="diagram-container">
+                        <svg class="interactive-diagram" viewBox="0 0 850 350" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <marker id="rest-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                    <polygon points="0 0, 10 3.5, 0 7" fill="#f57c00"/>
+                                </marker>
+                                <marker id="event-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                    <polygon points="0 0, 10 3.5, 0 7" fill="#0277bd"/>
+                                </marker>
+                                <marker id="ai-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                    <polygon points="0 0, 10 3.5, 0 7" fill="#2e7d32"/>
+                                </marker>
+                            </defs>
+                            
+                            <text x="425" y="25" class="node-text" style="font-weight:bold; font-size:15px; fill:#333;">Smart Campus Microservices Architecture</text>
+                            
+                            <g id="user-node" class="diagram-node" data-connections="api-gateway" onmouseover="highlightConnections('user-node')" onmouseout="clearHighlights()">
+                                <circle cx="80" cy="175" r="30" class="node-input"/>
+                                <text x="80" y="178" class="emoji-text">👤</text>
+                                <text x="80" y="220" class="node-text node-title">User</text>
+                                <text x="80" y="235" class="node-text node-subtitle">Web/Mobile</text>
+                            </g>
+                            
+                            <g id="api-gateway" class="diagram-node" data-connections="auth-service,booking-service" onmouseover="highlightConnections('api-gateway')" onmouseout="clearHighlights()">
+                                <rect x="170" y="140" width="110" height="70" rx="6" class="node-microservice"/>
+                                <text x="225" y="165" class="node-text node-title">API Gateway</text>
+                                <text x="225" y="180" class="node-text node-subtitle">Load Balancer</text>
+                                <text x="225" y="195" class="node-text node-subtitle">Rate Limiting</text>
+                            </g>
+                            
+                            <g id="auth-service" class="diagram-node" onmouseover="highlightConnections('auth-service')" onmouseout="clearHighlights()">
+                                <rect x="170" y="50" width="110" height="70" rx="6" class="node-microservice"/>
+                                <text x="225" y="75" class="node-text node-title">Auth Service</text>
+                                <text x="225" y="90" class="node-text node-subtitle">OAuth2/OIDC</text>
+                                <text x="225" y="105" class="node-text node-subtitle">Asgardeo</text>
+                            </g>
+                            
+                            <g id="booking-service" class="diagram-node" data-connections="kafka-hub" onmouseover="highlightConnections('booking-service')" onmouseout="clearHighlights()">
+                                <rect x="170" y="230" width="110" height="70" rx="6" class="node-microservice"/>
+                                <text x="225" y="255" class="node-text node-title">Booking Service</text>
+                                <text x="225" y="270" class="node-text node-subtitle">Conflict Resolution</text>
+                                <text x="225" y="285" class="node-text node-subtitle">Ballerina</text>
+                            </g>
+                            
+                            <g id="kafka-hub" class="diagram-node" data-connections="ai-engine,resource-service" onmouseover="highlightConnections('kafka-hub')" onmouseout="clearHighlights()">
+                                <ellipse cx="450" cy="175" rx="70" ry="40" class="node-kafka"/>
+                                <text x="450" y="170" class="node-text node-title">Apache Kafka</text>
+                                <text x="450" y="185" class="node-text node-subtitle">Event Streaming</text>
+                            </g>
+                            
+                            <g id="ai-engine" class="diagram-node" data-connections="booking-service" onmouseover="highlightConnections('ai-engine')" onmouseout="clearHighlights()">
+                                <rect x="590" y="80" width="120" height="70" rx="6" class="node-agent"/>
+                                <text x="650" y="105" class="node-text node-title">AI Engine</text>
+                                <text x="650" y="120" class="node-text node-subtitle">Pattern Analysis</text>
+                                <text x="650" y="135" class="node-text node-subtitle">Pinecone Vector DB</text>
+                            </g>
+                            
+                            <g id="resource-service" class="diagram-node" onmouseover="highlightConnections('resource-service')" onmouseout="clearHighlights()">
+                                <rect x="590" y="220" width="120" height="70" rx="6" class="node-microservice"/>
+                                <text x="650" y="245" class="node-text node-title">Resource Service</text>
+                                <text x="650" y="260" class="node-text node-subtitle">Inventory Mgmt</text>
+                                <text x="650" y="275" class="node-text node-subtitle">PostgreSQL</text>
+                            </g>
+                            
+                            <path d="M 110 175 L 170 175" stroke="#666" stroke-width="2" marker-end="url(#rest-arrow)" class="diagram-arrow"/>
+                            <path d="M 225 140 L 225 120" stroke="#f57c00" stroke-width="2" marker-end="url(#rest-arrow)" class="diagram-arrow"/>
+                            <path d="M 225 210 L 225 230" stroke="#f57c00" stroke-width="2" marker-end="url(#rest-arrow)" class="diagram-arrow"/>
+                            <path d="M 280 265 L 380 205" stroke="#0277bd" stroke-width="3" marker-end="url(#event-arrow)" class="diagram-arrow"/>
+                            <path d="M 520 155 L 590 135" stroke="#0277bd" stroke-width="3" marker-end="url(#event-arrow)" class="diagram-arrow"/>
+                            <path d="M 520 195 L 590 235" stroke="#0277bd" stroke-width="3" marker-end="url(#event-arrow)" class="diagram-arrow"/>
+                            <path d="M 590 115 Q 400 50 280 230" stroke="#2e7d32" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#ai-arrow)" class="diagram-arrow"/>
+                            
+                            <g transform="translate(50, 320)">
+                                <text x="0" y="0" class="node-text" style="font-weight:600; font-size:11px; fill:#666;">Legend:</text>
+                                <line x1="60" y1="-2" x2="85" y2="-2" stroke="#f57c00" stroke-width="2"/>
+                                <text x="90" y="2" class="node-text" style="font-size:10px; fill:#666;">REST API</text>
+                                <line x1="150" y1="-2" x2="175" y2="-2" stroke="#0277bd" stroke-width="3"/>
+                                <text x="180" y="2" class="node-text" style="font-size:10px; fill:#666;">Kafka Events</text>
+                                <line x1="260" y1="-2" x2="285" y2="-2" stroke="#2e7d32" stroke-width="2" stroke-dasharray="4,3"/>
+                                <text x="290" y="2" class="node-text" style="font-size:10px; fill:#666;">AI Feedback</text>
+                            </g>
+                        </svg>
+                    </div>
+                    <ul>
+                        <li><strong>Distributed Core:</strong> Decomposed functionality into User, Resource, Booking, and AI services, communicating via Apache Kafka.</li>
+                        <li><strong>Security:</strong> Implemented centralized Identity Management using Asgardeo (OAuth2/OIDC).</li>
+                        <li><strong>AI Integration:</strong> Utilized Pinecone Vector DB to analyze booking patterns.</li>
+                    </ul>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-header">
+                        <h3>BookMatch: Hybrid Recommendation Engine</h3>
+                        <span class="tech-tag">FastAPI / Next.js / LightGCN</span>
+                    </div>
+                    <p>
+                        Solves the "Cold Start" problem by merging Content-Based Filtering (NLP on descriptions) with Collaborative Filtering (Graph Neural Networks).
+                    </p>
+                    <ul>
+                        <li><strong>Performance:</strong> Redis caching reduced database load by 40% for frequent queries.</li>
+                        <li><strong>Scalability:</strong> Fully containerized stack using Docker.</li>
+                    </ul>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-header">
+                        <h3>AgriCare: Offline-First Mobile Arch</h3>
+                        <span class="tech-tag">React Native / SQLite</span>
+                    </div>
+                    <p>
+                        Designed for rural environments with unstable internet. Features a custom synchronization protocol using local SQLite databases that sync with PostgreSQL when connectivity is restored.
+                    </p>
+                </div>
+            </div>
+
+            <div id="experience" class="tab-content">
+                <h2>Professional Experience</h2>
+                
+                <div class="project-card">
+                    <div class="project-header">
+                        <h3>Software Engineering Intern | WSO2</h3>
+                        <span>Jan 2025 – June 2025</span>
+                    </div>
+                    <p><strong>Focus:</strong> Middleware Development & Cloud Integration</p>
+                    <ul>
+                        <li><strong>Legacy Migration:</strong> Architected the migration of the Partner Portal from Drupal to a modern React/Ballerina microservices stack.</li>
+                        <li><strong>Performance Engineering:</strong> Optimized REST API payloads and database queries, achieving a 40% improvement in system response time.</li>
+                        <li><strong>CI/CD:</strong> Built automated deployment pipelines using GitHub Actions and WSO2 Choreo.</li>
+                    </ul>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-header">
+                        <h3>Education</h3>
+                    </div>
+                    <p><strong>B.Sc. (Hons) in Computer Science & Engineering</strong><br>
+                    University of Moratuwa | 2022 – 2026 (Expected)<br>
+                    <em>Dean’s List Recognition (CGPA: 3.67/4.00)</em></p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+                tabcontent[i].classList.remove("active");
+            }
+            tablinks = document.getElementsByClassName("tab-btn");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            setTimeout(() => {
+                document.getElementById(tabName).classList.add("active");
+            }, 10);
+            evt.currentTarget.className += " active";
+        }
+    </script>
+
+</body>
+</html>
